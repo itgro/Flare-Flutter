@@ -5,33 +5,32 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:flare_dart/actor_flags.dart';
-import 'package:flare_dart/actor_image.dart';
-import 'package:flare_dart/math/aabb.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
-
-import 'package:flutter/material.dart';
-import 'package:flare_dart/actor_component.dart';
 import 'package:flare_dart/actor.dart';
 import 'package:flare_dart/actor_artboard.dart';
-import 'package:flare_dart/actor_shape.dart';
-import 'package:flare_dart/actor_path.dart';
+import 'package:flare_dart/actor_color.dart';
+import 'package:flare_dart/actor_component.dart';
+import 'package:flare_dart/actor_drawable.dart';
 import 'package:flare_dart/actor_ellipse.dart';
+import 'package:flare_dart/actor_flags.dart';
+import 'package:flare_dart/actor_image.dart';
+import 'package:flare_dart/actor_node.dart';
+import 'package:flare_dart/actor_path.dart';
 import 'package:flare_dart/actor_polygon.dart';
 import 'package:flare_dart/actor_rectangle.dart';
+import 'package:flare_dart/actor_shape.dart';
 import 'package:flare_dart/actor_star.dart';
 import 'package:flare_dart/actor_triangle.dart';
-import 'package:flare_dart/actor_color.dart';
-import 'package:flare_dart/actor_node.dart';
-import 'package:flare_dart/actor_drawable.dart';
+import 'package:flare_dart/math/aabb.dart';
 import 'package:flare_dart/math/mat2d.dart';
 import 'package:flare_dart/math/vec2d.dart';
 import 'package:flare_dart/path_point.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
 import 'trim_path.dart';
 
-export 'package:flare_dart/animation/actor_animation.dart';
 export 'package:flare_dart/actor_node.dart';
+export 'package:flare_dart/animation/actor_animation.dart';
 
 abstract class FlutterActorDrawable {
   ui.BlendMode _blendMode;
@@ -345,11 +344,22 @@ class FlutterGradientFill extends GradientFill with FlutterFill {
 
     int idx = 0;
     for (int i = 0; i < numStops; i++) {
-      ui.Color color = ui.Color.fromRGBO(
-          (colorStops[idx] * 255.0).round(),
-          (colorStops[idx + 1] * 255.0).round(),
-          (colorStops[idx + 2] * 255.0).round(),
-          colorStops[idx + 3]);
+      ui.Color color;
+
+      if (artboard.overrideColor == null) {
+        color = ui.Color.fromRGBO(
+            (colorStops[idx] * 255.0).round(),
+            (colorStops[idx + 1] * 255.0).round(),
+            (colorStops[idx + 2] * 255.0).round(),
+            colorStops[idx + 3]);
+      } else {
+        color = ui.Color.fromRGBO(
+            (artboard.overrideColor[0] * 255.0).round(),
+            (artboard.overrideColor[1] * 255.0).round(),
+            (artboard.overrideColor[2] * 255.0).round(),
+            colorStops[idx + 3]);
+      }
+
       colors.add(color);
       stops.add(colorStops[idx + 4]);
       idx += 5;
@@ -676,8 +686,8 @@ class FlutterActor extends Actor {
     if (_rawAtlasData == null) {
       return false;
     }
-	List<Uint8List> data = _rawAtlasData;
-	_rawAtlasData = null;
+    List<Uint8List> data = _rawAtlasData;
+    _rawAtlasData = null;
     List<ui.Codec> codecs =
         await Future.wait(data.map(ui.instantiateImageCodec));
     List<ui.FrameInfo> frames =
@@ -1048,7 +1058,8 @@ class FlutterActorImage extends ActorImage with FlutterActorDrawable {
       }
     }
 
-    _paint.color = _paint.color.withOpacity(renderOpacity.clamp(0.0, 1.0).toDouble());
+    _paint.color =
+        _paint.color.withOpacity(renderOpacity.clamp(0.0, 1.0).toDouble());
 
     if (imageTransform != null) {
       canvas.transform(imageTransform.mat4);

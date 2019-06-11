@@ -676,8 +676,8 @@ class FlutterActor extends Actor {
     if (_rawAtlasData == null) {
       return false;
     }
-    List<Uint8List> data = _rawAtlasData;
-    _rawAtlasData = null;
+	List<Uint8List> data = _rawAtlasData;
+	_rawAtlasData = null;
     List<ui.Codec> codecs =
         await Future.wait(data.map(ui.instantiateImageCodec));
     List<ui.FrameInfo> frames =
@@ -911,7 +911,7 @@ class FlutterActorImage extends ActorImage with FlutterActorDrawable {
   Float32List _uvBuffer;
   ui.Paint _paint;
   ui.Vertices _canvasVertices;
-  Uint16List _indices;
+  Int32List _indices;
 
   void onPaintUpdated(ui.Paint paint) {}
   final Float64List _identityMatrix = Float64List.fromList(<double>[
@@ -971,7 +971,8 @@ class FlutterActorImage extends ActorImage with FlutterActorDrawable {
     }
     _vertexBuffer = makeVertexPositionBuffer();
     _uvBuffer = makeVertexUVBuffer();
-    _indices = triangles;
+    _indices =
+        Int32List.fromList(triangles); // nima runtime loads 16 bit indices
     updateVertexUVBuffer(_uvBuffer);
     int count = vertexCount;
     int idx = 0;
@@ -1047,8 +1048,7 @@ class FlutterActorImage extends ActorImage with FlutterActorDrawable {
       }
     }
 
-    _paint.color =
-        _paint.color.withOpacity(renderOpacity.clamp(0.0, 1.0).toDouble());
+    _paint.color = _paint.color.withOpacity(renderOpacity.clamp(0.0, 1.0).toDouble());
 
     if (imageTransform != null) {
       canvas.transform(imageTransform.mat4);
